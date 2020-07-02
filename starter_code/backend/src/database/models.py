@@ -29,6 +29,7 @@ db_drop_and_create_all()
     !!NOTE you can change the database_filename variable to have multiple verisons of a database
 '''
 def db_drop_and_create_all():
+    print("Dropping database and recreating")
     db.drop_all()
     db.create_all()
 
@@ -43,20 +44,21 @@ class Drink(db.Model):
     title = Column(String(80), unique=True)
     # the ingredients blob - this stores a lazy json blob
     # the required datatype is [{'color': string, 'name':string, 'parts':number}]
-    recipe =  Column(String(180), nullable=False)
+    recipe = Column(String(180), nullable=False)
 
     '''
     short()
         short form representation of the Drink model
     '''
     def short(self):
-        print(json.loads(self.recipe))
-        short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(self.recipe)]
-        return {
+        # short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(self.recipe)]
+        response_object =  {
             'id': self.id,
             'title': self.title,
-            'recipe': short_recipe
+            'recipe': json.loads(self.recipe)
         }
+        return response_object
+
 
     '''
     long()
@@ -68,7 +70,7 @@ class Drink(db.Model):
             'title': self.title,
             'recipe': json.loads(self.recipe)
         }
-
+ 
     '''
     insert()
         inserts a new model into a database
@@ -108,3 +110,28 @@ class Drink(db.Model):
 
     def __repr__(self):
         return json.dumps(self.short())
+        # return json.dumps({"id": self.id, "title": self.title, "recipe": self.recipe}.short())
+
+
+
+# Example repr
+
+
+# class Venue(db.Model):
+#     __tablename__ = 'Venue'
+
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(1000), nullable=False)
+#     city = db.Column(db.String(120), nullable=False)
+#     state = db.Column(db.String(120), nullable=False)
+#     address = db.Column(db.String(120), nullable=False)
+#     phone = db.Column(db.String(120), nullable=False)
+#     image_link = db.Column(db.String(1000), nullable=True)
+#     facebook_link = db.Column(db.String(500), nullable=True)
+#     website = db.Column(db.String(500), nullable=True)
+#     seeking_talent = db.Column(db.Boolean(), default=True, nullable=True)
+#     shows = db.relationship('Show', backref='Venue', lazy=True)
+
+#     def __repr__(self):
+#         return '"id": {self.id}, "name": {self.name}, "city": {self.city}, "state": {self.state}, "address": {self.address}, "phone": {self.phone}, "image_link": {self.image_link}, "facebook_link": {self.facebook_link}'.format(self=self);
+

@@ -2,11 +2,13 @@ import os
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
+import asyncio
 from flask_cors import CORS
 from functools import wraps
 
 from .database.models import db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
+
 
 app = Flask(__name__)
 setup_db(app)
@@ -18,6 +20,10 @@ CORS(app)
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
 # db_drop_and_create_all()
+
+async def wait_for_db(request):
+    data = await request()
+    return data
 
 
 def get_auth_token():
@@ -50,10 +56,6 @@ def check_auth(routef):
 @app.route('/headers', methods=["GET"])
 @check_auth
 def headers(token):
-    print("")
-    print("token")
-    print(token)
-    print("")
     return 'not implemented'
 
 
@@ -65,6 +67,25 @@ def headers(token):
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=["GET"])
+def get_public_drinks():
+    try:
+        drinks = wait_for_db(Drink.query.all())
+        response_object = json.dumps({"success": True, "drinks": drinks})
+    except:
+        abort(401)
+    finally:
+        return response_object
+        # return json.dumps({"success": True, "drinks": drinks})
+
+
+    # try:
+    #     drinks = Drink.query.all()
+    #     return str({"success": True, "drinks": drinks})
+    # except Error as e:
+    #     print("Error:")
+    #     print(e)
+    #     abort(401)
 
 
 '''
