@@ -2,10 +2,12 @@ import os
 from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
 import json
+from flask import jsonify
 
 database_filename = "database.db"
 project_dir = os.path.dirname(os.path.abspath(__file__))
 database_path = "sqlite:///{}".format(os.path.join(project_dir, database_filename))
+
 
 # Database Path
 # sqlite:////Users/tylerproctor/Desktop/Files to Back up/CodeEd/Udacity_Projects/Section_1/Project1/Udacity_Fyurr_App_Project/projects/Coffee_Shop_Site_Repo/Udacity_Coffee-Shop-Site/starter_code/backend/src/database/database.db
@@ -21,6 +23,16 @@ def setup_db(app):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
+
+
+def cprint(string1, string2):
+    print("=========================")
+    print("")
+    print(string1)
+    print("")
+    print(string2)
+    print("")
+    print("=========================")
 
 '''
 db_drop_and_create_all()
@@ -51,11 +63,12 @@ class Drink(db.Model):
         short form representation of the Drink model
     '''
     def short(self):
-        # short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(self.recipe)]
-        response_object =  {
+        recipe_formatted = str(self.recipe).replace("'", "\"")
+        short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(recipe_formatted)]
+        response_object = {
             'id': self.id,
             'title': self.title,
-            'recipe': json.loads(self.recipe)
+            'recipe': json.loads(recipe_formatted)
         }
         return response_object
 
@@ -65,10 +78,11 @@ class Drink(db.Model):
         long form representation of the Drink model
     '''
     def long(self):
+        recipe_formatted = str(self.recipe).replace("'", "\"")
         return {
             'id': self.id,
             'title': self.title,
-            'recipe': json.loads(self.recipe)
+            'recipe': json.loads(recipe_formatted)
         }
  
     '''

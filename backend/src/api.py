@@ -1,4 +1,4 @@
-import os
+import os  
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -7,7 +7,7 @@ from flask_cors import CORS
 from functools import wraps
 
 from .database.models import db_drop_and_create_all, setup_db, Drink
-from .auth.auth import AuthError, requires_auth
+from .auth.auth import AuthError, check_auth
 
 
 app = Flask(__name__)
@@ -26,66 +26,40 @@ async def wait_for_db(request):
     return data
 
 
-def get_auth_token():
-    if 'Authorization' not in request.headers:
-        abort(401)
 
-    auth_header_full = request.headers['Authorization']
-    auth_header_split = auth_header_full.split(" ")
+def cprint(string1, string2):
+    print("=========================")
+    print("")
+    print(string1)
+    print(string2)
+    print("")
+    print("=========================")
 
-    if len(auth_header_split) != 2:
-        abort(401)
-
-    if auth_header_split[0].lower() != 'bearer':
-        abort(401)
-
-    header_token = auth_header_split[1]
-
-    return header_token
-
-
-def check_auth(routef):
-    @wraps(routef)
-    def wrapper(*args1, **args2):
-        token = get_auth_token()
-        return routef(token, *args1, **args2)
-    return wrapper
 
 
 # ROUTES
 @app.route('/headers', methods=["GET"])
-@check_auth
+@check_auth('get:drinks')
 def headers(token):
-    return 'not implemented'
+    return 'token'
 
 
 '''
-@TODO implement endpoint
-    GET /drinks
-        it should be a public endpoint
-        it should contain only the drink.short() data representation
-    returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
-        or appropriate status code indicating reason for failure
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++ GET /drinks - Completed  +++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 '''
+
+
 @app.route('/drinks', methods=["GET"])
-def get_public_drinks():
+@check_auth('get:drinks')
+def get_public_drinks(payload):
     try:
-        drinks = wait_for_db(Drink.query.all())
-        response_object = json.dumps({"success": True, "drinks": drinks})
+        drinks = Drink.query.all()
     except:
         abort(401)
     finally:
-        return response_object
-        # return json.dumps({"success": True, "drinks": drinks})
-
-
-    # try:
-    #     drinks = Drink.query.all()
-    #     return str({"success": True, "drinks": drinks})
-    # except Error as e:
-    #     print("Error:")
-    #     print(e)
-    #     abort(401)
+        return json.dumps({"success": True, "drinks": [drink.short() for drink in drinks]})
 
 
 '''
@@ -96,6 +70,27 @@ def get_public_drinks():
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+'''
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++ GET /drinks-detail - WIP  +++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+'''
+
+# Add permissions once route works
+
+
+@app.route('/drinks-detail', methods=["GET"])
+@check_auth('get:drinks-detail')
+def get_drinks_detail(payload):
+    try:
+        drinks = Drink.query.all()
+    except:
+        abort(401)
+    finally:
+        return json.dumps({"success": True, "drinks": [drink.long() for drink in drinks]})
+
+
+
 
 
 '''
@@ -107,6 +102,26 @@ def get_public_drinks():
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+
+
+
+@app.route('/drinks', methods=["POST"])
+@check_auth('post:drinks')
+def create_new_drink(payload):
+    req_body = json.loads(request.data.decode("utf-8"))
+    cprint("post new drink: req-body", req_body)
+
+    new_drink = Drink(
+        title=req_body["title"],
+        recipe=str(req_body["recipe"])
+        )
+    try:
+        new_drink.insert()
+    except:
+        abort(401)
+    finally: 
+        return jsonify({"success": True, "drinks": new_drink.long()})
+
 
 
 '''
@@ -121,6 +136,21 @@ def get_public_drinks():
         or appropriate status code indicating reason for failure
 '''
 
+@app.route('/drinks/<int:drink_id>', methods=['PATCH'])
+@check_auth('patch:drinks')
+def update_drink(payload, drink_id):
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+        req_data = json.loads(request.data.decode("utf-8"))
+        drink.title = req_data["title"]
+        drink.recipe = str(req_data["recipe"])
+        drink.update()
+    except:
+        abort(401)
+    finally:
+        drink = [Drink.query.filter(Drink.id == drink_id).one_or_none()]
+        return json.dumps({"success": True, "drinks": [drink.short() for drink in drink]})
+
 
 '''
 @TODO implement endpoint
@@ -132,6 +162,19 @@ def get_public_drinks():
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks/<int:drink_id>', methods=['DELETE'])
+@check_auth('delete:drinks')
+def delete_drink(payload, drink_id):
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+        Drink.query.get(drink_id).delete()
+        db.session.commit()
+    except:
+        abort(401)
+    finally:
+        return jsonify({"success": True, "delete": drink_id})
 
 
 # Error Handling
