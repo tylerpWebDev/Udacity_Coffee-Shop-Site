@@ -1,4 +1,4 @@
-import os  
+import os
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -21,10 +21,10 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 '''
 # db_drop_and_create_all()
 
+
 async def wait_for_db(request):
     data = await request()
     return data
-
 
 
 def cprint(string1, string2):
@@ -34,7 +34,6 @@ def cprint(string1, string2):
     print(string2)
     print("")
     print("=========================")
-
 
 
 # ROUTES
@@ -52,14 +51,14 @@ def headers(token):
 
 
 @app.route('/drinks', methods=["GET"])
-@check_auth('get:drinks')
-def get_public_drinks(payload):
+def get_public_drinks():
     try:
         drinks = Drink.query.all()
-    except:
+    except BaseException:
         abort(401)
     finally:
-        return json.dumps({"success": True, "drinks": [drink.short() for drink in drinks]})
+        return json.dumps({"success": True, "drinks": [
+                          drink.short() for drink in drinks]})
 
 
 '''
@@ -84,13 +83,11 @@ def get_public_drinks(payload):
 def get_drinks_detail(payload):
     try:
         drinks = Drink.query.all()
-    except:
+    except BaseException:
         abort(401)
     finally:
-        return json.dumps({"success": True, "drinks": [drink.long() for drink in drinks]})
-
-
-
+        return json.dumps({"success": True, "drinks": [
+                          drink.long() for drink in drinks]})
 
 
 '''
@@ -104,7 +101,6 @@ def get_drinks_detail(payload):
 '''
 
 
-
 @app.route('/drinks', methods=["POST"])
 @check_auth('post:drinks')
 def create_new_drink(payload):
@@ -114,14 +110,13 @@ def create_new_drink(payload):
     new_drink = Drink(
         title=req_body["title"],
         recipe=str(req_body["recipe"])
-        )
+    )
     try:
         new_drink.insert()
-    except:
+    except BaseException:
         abort(401)
-    finally: 
+    finally:
         return jsonify({"success": True, "drinks": new_drink.long()})
-
 
 
 '''
@@ -136,6 +131,7 @@ def create_new_drink(payload):
         or appropriate status code indicating reason for failure
 '''
 
+
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @check_auth('patch:drinks')
 def update_drink(payload, drink_id):
@@ -145,11 +141,12 @@ def update_drink(payload, drink_id):
         drink.title = req_data["title"]
         drink.recipe = str(req_data["recipe"])
         drink.update()
-    except:
+    except BaseException:
         abort(401)
     finally:
         drink = [Drink.query.filter(Drink.id == drink_id).one_or_none()]
-        return json.dumps({"success": True, "drinks": [drink.short() for drink in drink]})
+        return json.dumps({"success": True, "drinks": [
+                          drink.short() for drink in drink]})
 
 
 '''
@@ -171,7 +168,7 @@ def delete_drink(payload, drink_id):
         drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
         Drink.query.get(drink_id).delete()
         db.session.commit()
-    except:
+    except BaseException:
         abort(401)
     finally:
         return jsonify({"success": True, "delete": drink_id})

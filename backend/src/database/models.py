@@ -6,11 +6,13 @@ from flask import jsonify
 
 database_filename = "database.db"
 project_dir = os.path.dirname(os.path.abspath(__file__))
-database_path = "sqlite:///{}".format(os.path.join(project_dir, database_filename))
+database_path = "sqlite:///{}".format(
+    os.path.join(project_dir, database_filename))
 
 
 # Database Path
-# sqlite:////Users/tylerproctor/Desktop/Files to Back up/CodeEd/Udacity_Projects/Section_1/Project1/Udacity_Fyurr_App_Project/projects/Coffee_Shop_Site_Repo/Udacity_Coffee-Shop-Site/starter_code/backend/src/database/database.db
+# sqlite:////Users/tylerproctor/Desktop/Files to Back
+# up/CodeEd/Udacity_Projects/Section_1/Project1/Udacity_Fyurr_App_Project/projects/Coffee_Shop_Site_Repo/Udacity_Coffee-Shop-Site/starter_code/backend/src/database/database.db
 
 db = SQLAlchemy()
 
@@ -18,6 +20,8 @@ db = SQLAlchemy()
 setup_db(app)
     binds a flask application and a SQLAlchemy service
 '''
+
+
 def setup_db(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -34,37 +38,46 @@ def cprint(string1, string2):
     print("")
     print("=========================")
 
+
 '''
 db_drop_and_create_all()
     drops the database tables and starts fresh
     can be used to initialize a clean database
     !!NOTE you can change the database_filename variable to have multiple verisons of a database
 '''
+
+
 def db_drop_and_create_all():
     print("Dropping database and recreating")
     db.drop_all()
     db.create_all()
 
+
 '''
 Drink
 a persistent drink entity, extends the base SQLAlchemy Model
 '''
+
+
 class Drink(db.Model):
     # Autoincrementing, unique primary key
     id = Column(Integer().with_variant(Integer, "sqlite"), primary_key=True)
     # String Title
     title = Column(String(80), unique=True)
     # the ingredients blob - this stores a lazy json blob
-    # the required datatype is [{'color': string, 'name':string, 'parts':number}]
+    # the required datatype is [{'color': string, 'name':string,
+    # 'parts':number}]
     recipe = Column(String(180), nullable=False)
 
     '''
     short()
         short form representation of the Drink model
     '''
+
     def short(self):
         recipe_formatted = str(self.recipe).replace("'", "\"")
-        short_recipe = [{'color': r['color'], 'parts': r['parts']} for r in json.loads(recipe_formatted)]
+        short_recipe = [{'color': r['color'], 'parts': r['parts']}
+                        for r in json.loads(recipe_formatted)]
         response_object = {
             'id': self.id,
             'title': self.title,
@@ -72,11 +85,11 @@ class Drink(db.Model):
         }
         return response_object
 
-
     '''
     long()
         long form representation of the Drink model
     '''
+
     def long(self):
         recipe_formatted = str(self.recipe).replace("'", "\"")
         return {
@@ -84,7 +97,7 @@ class Drink(db.Model):
             'title': self.title,
             'recipe': json.loads(recipe_formatted)
         }
- 
+
     '''
     insert()
         inserts a new model into a database
@@ -94,6 +107,7 @@ class Drink(db.Model):
             drink = Drink(title=req_title, recipe=req_recipe)
             drink.insert()
     '''
+
     def insert(self):
         db.session.add(self)
         db.session.commit()
@@ -106,6 +120,7 @@ class Drink(db.Model):
             drink = Drink(title=req_title, recipe=req_recipe)
             drink.delete()
     '''
+
     def delete(self):
         db.session.delete(self)
         db.session.commit()
@@ -119,13 +134,14 @@ class Drink(db.Model):
             drink.title = 'Black Coffee'
             drink.update()
     '''
+
     def update(self):
         db.session.commit()
 
     def __repr__(self):
         return json.dumps(self.short())
-        # return json.dumps({"id": self.id, "title": self.title, "recipe": self.recipe}.short())
-
+        # return json.dumps({"id": self.id, "title": self.title, "recipe":
+        # self.recipe}.short())
 
 
 # Example repr
@@ -147,5 +163,7 @@ class Drink(db.Model):
 #     shows = db.relationship('Show', backref='Venue', lazy=True)
 
 #     def __repr__(self):
-#         return '"id": {self.id}, "name": {self.name}, "city": {self.city}, "state": {self.state}, "address": {self.address}, "phone": {self.phone}, "image_link": {self.image_link}, "facebook_link": {self.facebook_link}'.format(self=self);
-
+# return '"id": {self.id}, "name": {self.name}, "city": {self.city},
+# "state": {self.state}, "address": {self.address}, "phone": {self.phone},
+# "image_link": {self.image_link}, "facebook_link":
+# {self.facebook_link}'.format(self=self);

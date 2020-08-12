@@ -9,11 +9,13 @@ AUTH0_DOMAIN = 'typcoffeeshop.us.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE = 'coffeeshop'
 
-## AuthError Exception
+# AuthError Exception
 '''
 AuthError Exception
 A standardized way to communicate auth failure modes
 '''
+
+
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
@@ -30,7 +32,7 @@ def cprint(string1, string2):
     print("=========================")
 
 
-## Auth Header
+# Auth Header
 
 '''
 @TODO implement get_token_auth_header() method
@@ -40,6 +42,8 @@ def cprint(string1, string2):
         it should raise an AuthError if the header is malformed
     return the token part of the header
 '''
+
+
 def get_token_auth_header():
     if 'Authorization' not in request.headers:
         abort(401)
@@ -57,6 +61,7 @@ def get_token_auth_header():
 
     return header_token
 
+
 '''
 @TODO implement check_permissions(permission, payload) method
     @INPUTS
@@ -68,6 +73,8 @@ def get_token_auth_header():
     it should raise an AuthError if the requested permission string is not in the payload permissions array
     return true otherwise
 '''
+
+
 def check_permissions(permission_name, payload):
 
     if 'permissions' not in payload:
@@ -77,6 +84,7 @@ def check_permissions(permission_name, payload):
         abort(403)
 
     return True
+
 
 '''
 @TODO implement verify_decode_jwt(token) method
@@ -91,14 +99,17 @@ def check_permissions(permission_name, payload):
 
     !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
 '''
+
+
 def verify_decode_jwt(token):
     # GET THE PUBLIC KEY FROM AUTH0
-    jsonurl = urlopen(f'https://typcoffeeshop.us.auth0.com/.well-known/jwks.json')
+    jsonurl = urlopen(
+        f'https://typcoffeeshop.us.auth0.com/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
-    
+
     # GET THE DATA IN THE HEADER
     unverified_header = jwt.get_unverified_header(token)
-    
+
     # CHOOSE OUR KEY
     rsa_key = {}
     if 'kid' not in unverified_header:
@@ -116,7 +127,7 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
-    
+
     # Finally, verify!!!
     if rsa_key:
         try:
@@ -148,9 +159,10 @@ def verify_decode_jwt(token):
                 'description': 'Unable to parse authentication token.'
             }, 400)
     raise AuthError({
-                'code': 'invalid_header',
+        'code': 'invalid_header',
                 'description': 'Unable to find the appropriate key.'
-            }, 400)
+    }, 400)
+
 
 '''
 @TODO implement @requires_auth(permission) decorator method
@@ -171,7 +183,7 @@ def check_auth(permission=''):
             token = get_token_auth_header()
             try:
                 token_decode = verify_decode_jwt(token)
-            except:
+            except BaseException:
                 abort(401)
 
             check_permissions(permission, token_decode)
@@ -179,12 +191,6 @@ def check_auth(permission=''):
             return routef(token, *args1, **args2)
         return wrapper
     return check_auth_decorator
-
-
-
-
-
-
 
 
 # def requires_auth(permission=''):
